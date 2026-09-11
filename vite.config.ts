@@ -1,10 +1,13 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+/// <reference types="vitest/config" />
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
+// https://vite.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [react()],
-  optimizeDeps: {
-    exclude: ['lucide-react'],
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
   },
-});
+})

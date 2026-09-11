@@ -1,0 +1,280 @@
+/* ───────────── viewport & stage ───────────── */
+.viewport {
+  position: fixed;
+  inset: 0;
+  overflow: clip;
+  background: #050403;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  transition: transform var(--zoom-ms) var(--ease-out);
+  will-change: transform;
+}
+/* while the machine is off, viewport changes must snap, not animate */
+.viewport.phase-off .stage { transition: none; }
+
+.stage-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* subtle film grain over the photo, disappears when zoomed (would look wrong scaled) */
+.viewport::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  transition: opacity 600ms;
+}
+.viewport.is-zoomed::after { opacity: 0.035; }
+
+/* ───────────── light spill from the screen ───────────── */
+.spill {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 40%;
+  background: radial-gradient(ellipse at 50% 42%,
+    rgba(140, 200, 255, 0.34) 0%,
+    rgba(90, 150, 230, 0.16) 35%,
+    rgba(60, 100, 180, 0.04) 60%,
+    transparent 72%);
+  mix-blend-mode: screen;
+  filter: blur(6px);
+  transition: opacity 700ms ease 250ms;
+}
+.spill.is-on { opacity: 1; animation: spill-breathe 4s ease-in-out infinite; }
+
+@keyframes spill-breathe {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 1; }
+}
+
+/* ───────────── power LED ───────────── */
+.led {
+  position: absolute;
+  border-radius: 50%;
+  background: #ff3b2f;
+  box-shadow: 0 0 3px 1px rgba(255, 60, 40, 0.75);
+  transition: background 200ms, box-shadow 200ms;
+  pointer-events: none;
+}
+.led.is-on {
+  background: #6cff7a;
+  box-shadow: 0 0 4px 1.5px rgba(90, 255, 120, 0.85);
+}
+
+/* ───────────── physical power button ───────────── */
+.power-btn {
+  position: absolute;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 3px;
+  z-index: 3;
+}
+.power-btn:disabled { cursor: default; }
+.power-btn:active .power-ring { transform: scale(0.92); }
+
+.power-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(255, 220, 140, 0);
+  transition: box-shadow 200ms, transform 80ms;
+}
+.power-btn.is-idle .power-ring {
+  animation: ring-pulse 2.2s ease-in-out infinite;
+}
+.power-btn:hover .power-ring, .power-btn:focus-visible .power-ring {
+  box-shadow: 0 0 0 1px rgba(255, 220, 140, 0.9), 0 0 8px 2px rgba(255, 200, 100, 0.45);
+  animation: none;
+}
+@keyframes ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 220, 140, 0.15), 0 0 0 0 rgba(255, 200, 100, 0); }
+  50% { box-shadow: 0 0 0 1px rgba(255, 220, 140, 0.75), 0 0 10px 3px rgba(255, 200, 100, 0.35); }
+}
+
+/* ───────────── the CRT glass ───────────── */
+.glass {
+  position: absolute;
+  overflow: clip;
+  border-radius: 2.5px;
+  background: #060807;
+  z-index: 2;
+  isolation: isolate;
+}
+
+.surface {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  background: #060807;
+  overflow: clip;
+  contain: layout style paint;
+}
+
+/* CRT "tube open / tube collapse" via clip-path, straight from the 90s */
+.glass.is-off .surface { clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%); }
+.glass.is-on .surface  { animation: crt-open 520ms cubic-bezier(0.215, 0.61, 0.355, 1) 120ms both; }
+.glass.is-closing .surface { animation: crt-close 460ms cubic-bezier(0.215, 0.61, 0.355, 1) 620ms forwards; }
+
+@keyframes crt-open {
+  0%   { clip-path: polygon(50% 49.4%, 50% 49.4%, 50% 50.6%, 50% 50.6%); filter: brightness(3); }
+  40%  { clip-path: polygon(0 49.4%, 100% 49.4%, 100% 50.6%, 0 50.6%); filter: brightness(2.2); }
+  100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); filter: brightness(1); }
+}
+@keyframes crt-close {
+  0%   { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); filter: brightness(1); }
+  60%  { clip-path: polygon(0 49.6%, 100% 49.6%, 100% 50.4%, 0 50.4%); filter: brightness(2.6); }
+  100% { clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%); filter: brightness(4); }
+}
+
+/* overlays: inside the surface (scaled with the OS) … */
+.crt { position: absolute; inset: 0; pointer-events: none; }
+.crt-scanlines {
+  background: repeating-linear-gradient(to bottom,
+    rgba(0, 0, 0, 0.16) 0px, rgba(0, 0, 0, 0.16) 1px,
+    transparent 1px, transparent 3px);
+  mix-blend-mode: multiply;
+  z-index: 50;
+}
+.crt-rgb {
+  background: repeating-linear-gradient(to right,
+    rgba(255, 0, 0, 0.045) 0px, rgba(0, 255, 0, 0.03) 1px, rgba(0, 0, 255, 0.045) 2px, transparent 3px);
+  mix-blend-mode: screen;
+  z-index: 50;
+}
+/* … and on the glass (constant regardless of OS scale) */
+.crt-vignette {
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.22) 85%, rgba(0, 0, 0, 0.55) 100%);
+  z-index: 60;
+}
+.crt-reflection {
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.02) 28%, transparent 45%, transparent 80%, rgba(255, 255, 255, 0.03) 100%);
+  z-index: 61;
+}
+.crt-flicker {
+  background: rgba(200, 220, 255, 0.04);
+  z-index: 62;
+  opacity: 0;
+}
+.glass.is-on .crt-flicker { animation: flicker 3.7s steps(1) infinite; }
+@keyframes flicker {
+  0%, 92%, 100% { opacity: 0; }
+  93% { opacity: 1; }
+  94% { opacity: 0; }
+  96% { opacity: 0.6; }
+  97% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glass.is-on .crt-flicker { animation: none; }
+  .spill.is-on { animation: none; }
+}
+
+/* the machine glows when it is on */
+.glass.is-on { box-shadow: 0 0 6px 1px rgba(150, 200, 255, 0.35), 0 0 24px 6px rgba(90, 140, 220, 0.18); }
+
+/* ───────────── shutdown text ───────────── */
+.shutdown-screen {
+  position: absolute; inset: 0; z-index: 40;
+  display: grid; place-items: center;
+  background: var(--os-navy);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 26px;
+  animation: fade-in 200ms both;
+}
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+
+/* ───────────── HUD ───────────── */
+.hud {
+  position: absolute;
+  z-index: 20;
+  transition: opacity 600ms ease, transform 600ms var(--ease-out);
+  font-family: var(--font-bios);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 0, 0, 0.6);
+}
+.hud.is-hidden { opacity: 0; pointer-events: none; transform: translateY(-6px); }
+
+.hud-top {
+  left: clamp(16px, 3vw, 44px);
+  top: clamp(14px, 3vh, 36px);
+  line-height: 1.05;
+}
+.hud-name {
+  font-size: clamp(26px, 3.6vw, 44px);
+  color: #f2ecd9;
+  letter-spacing: 0.02em;
+}
+.hud-title {
+  font-size: clamp(16px, 1.6vw, 22px);
+  color: var(--os-gold-2);
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+}
+
+.hud-bottom {
+  left: 50%;
+  bottom: clamp(18px, 4vh, 40px);
+  transform: translateX(-50%);
+  text-align: center;
+}
+.hud.is-hidden.hud-bottom { transform: translate(-50%, 8px); }
+.hud-hint {
+  font-size: clamp(16px, 1.5vw, 20px);
+  color: rgba(242, 236, 217, 0.72);
+  letter-spacing: 0.05em;
+  animation: hint-pulse 2.6s ease-in-out infinite;
+}
+@keyframes hint-pulse { 0%, 100% { opacity: 0.55 } 50% { opacity: 1 } }
+
+.hud-power {
+  font-family: var(--font-ui);
+  font-size: 18px;
+  padding: 12px 22px;
+  border: 2px solid var(--os-gold);
+  background: rgba(10, 8, 6, 0.75);
+  color: var(--os-gold-2);
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(229, 168, 35, 0.25);
+}
+.hud-power-glyph { font-size: 20px; margin-right: 6px; }
+
+.hud-sound {
+  right: clamp(14px, 3vw, 36px);
+  bottom: clamp(14px, 3vh, 30px);
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 8, 6, 0.55);
+  cursor: pointer;
+  font-size: 18px;
+  display: grid; place-items: center;
+  backdrop-filter: blur(4px);
+  z-index: 30;
+}
+.hud-sound:hover { border-color: rgba(255, 255, 255, 0.45); }
+
+/* ───────────── full-viewport OS (mobile) ───────────── */
+.full-os {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  animation: fade-in 400ms both;
+}

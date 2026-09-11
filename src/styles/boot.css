@@ -1,0 +1,82 @@
+.boot {
+  position: absolute;
+  inset: 0;
+  background: #050605;
+  color: #d9d4c7;
+  font-family: var(--font-bios);
+  font-size: 26px;
+  line-height: 1.12;
+  padding: 34px 44px;
+  white-space: pre-wrap;
+  overflow: hidden;
+  cursor: pointer;
+}
+.boot-line { min-height: 1.12em; }
+.boot-line.is-ok   { color: #d9d4c7; }
+.boot-line .ok     { color: var(--os-phosphor); }
+.boot-line .warn   { color: var(--os-amber); }
+.boot-line .dim    { color: #8a857a; }
+.boot-cursor::after {
+  content: '█';
+  animation: blink 1s steps(1) infinite;
+  color: #d9d4c7;
+}
+@keyframes blink { 50% { opacity: 0 } }
+
+.boot-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 10px;
+}
+.boot-brand { color: #fff; font-size: 30px; letter-spacing: 0.02em; }
+.boot-logo {
+  display: inline-block; width: 34px; height: 34px; vertical-align: -8px; margin-right: 12px;
+}
+.boot-skip {
+  position: absolute; right: 40px; bottom: 26px;
+  font-size: 20px; color: #8a857a;
+}
+
+/* splash */
+.splash {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, #16386b 0%, var(--os-navy) 55%, #061428 100%);
+  display: grid; place-items: center;
+  animation: fade-in 300ms both;
+}
+.splash-inner { text-align: center; }
+.splash-logo { width: 150px; height: 150px; image-rendering: pixelated; filter: drop-shadow(0 6px 0 rgba(0,0,0,0.35)); }
+.splash-name {
+  font-family: var(--font-ui);
+  font-size: 58px;
+  color: #fff;
+  letter-spacing: 0.02em;
+  margin-top: 12px;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+}
+.splash-name em { font-style: normal; color: var(--os-gold); }
+.splash-sub {
+  font-family: var(--font-bios);
+  font-size: 24px;
+  color: #9fb9de;
+  margin-top: 2px;
+}
+.splash-bar {
+  margin: 34px auto 0;
+  width: 320px; height: 22px;
+  border: 2px solid #fff;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.35);
+}
+.splash-bar-fill {
+  height: 100%;
+  background: repeating-linear-gradient(to right, var(--os-gold) 0 12px, var(--os-gold-2) 12px 14px, transparent 14px 16px);
+  width: 0%;
+  animation: bar-fill 1.7s steps(20) 150ms forwards;
+}
+@keyframes bar-fill { to { width: 100% } }
+.splash-status {
+  font-family: var(--font-bios);
+  font-size: 22px;
+  color: #cbd9ee;
+  margin-top: 14px;
+}
